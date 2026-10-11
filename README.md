@@ -1,10 +1,11 @@
-# 🎲 Parchís Clásico — Arquitectura Orientada a Componentes & MVC
+# 🎲 Parchís Clásico — Arquitectura de Software
 
 <div align="center">
 
 ![Java](https://img.shields.io/badge/Java-21%2B-ED8B00?style=for-the-badge&logo=openjdk&logoColor=white)
 ![Maven](https://img.shields.io/badge/Apache%20Maven-3.9%2B-C71A36?style=for-the-badge&logo=apachemaven&logoColor=white)
 ![Swing](https://img.shields.io/badge/GUI-Java%20Swing-007396?style=for-the-badge&logo=java&logoColor=white)
+![Materia](https://img.shields.io/badge/Materia-Arquitectura%20de%20Software-blue?style=for-the-badge)
 ![Architecture](https://img.shields.io/badge/Architecture-MVC%20%7C%20Facade%20%7C%20Observer-4E73DF?style=for-the-badge)
 ![Status](https://img.shields.io/badge/Status-Completed%20%26%20Tested-brightgreen?style=for-the-badge)
 
@@ -12,22 +13,36 @@
   <b>Una recreación digital fiel, interactiva y arquitectónicamente robusta del tradicional juego de mesa Parchís.</b>
   <br />
   Diseñado para 2 a 4 jugadores con animaciones fluidas celda a celda, renderizado vectorial dinámico y un motor de reglas exhaustivo.
+  <br />
+  <i>Proyecto desarrollado para la materia de <b>Arquitectura de Software</b>.</i>
 </p>
 
 </div>
 
 ---
 
+## 👥 Equipo de Desarrollo
+
+Proyecto desarrollado de manera colaborativa utilizando Git con ramas de características independientes (`feature branches`) y flujo de Pull Requests para la materia de **Arquitectura de Software**:
+
+| Integrante | ID / Matrícula | Usuario GitHub | Rol en el Proyecto | Rama Asignada |
+|---|:---:|:---:|---|:---:|
+| **Gibran Alonso Ibarra Palomares** | `267883` | [@wareon711](https://github.com/wareon711) | Interfaz gráfica Swing (`VistaPartida`), panel del tablero (`PanelTablero`), dados interactivos, recursos y documentación. | `feature/interfaz-y-recursos` |
+| **Héctor Eduardo Rojo Cota** | `271229` | [@Eduardx77](https://github.com/Eduardx77) | Estructura base, arranque `Main`, modelos DTOs, interfaz del observador y configuración Maven. | `feature/app-y-dto` |
+| **Mía Anangel Nieblas Hollman** | `267653` | [@angeltqm](https://github.com/angeltqm) | Motor de reglas de negocio, validación de jugadas (`FachadaReglasMock`) y controlador MVC. | `feature/negocios-y-control` |
+
+---
+
 ## 📖 Tabla de Contenidos
 
-1. [Descripción General](#-descripción-general)
-2. [Características Principales](#-características-principales)
-3. [Arquitectura y Patrones de Diseño](#-arquitectura-y-patrones-de-diseño)
-4. [Estructura del Proyecto](#-estructura-del-proyecto)
-5. [Reglamento Oficial Implementado](#-reglamento-oficial-implementado)
-6. [Requisitos e Instalación](#-requisitos-e-instalación)
-7. [Cómo Jugar](#-cómo-jugar)
-8. [Equipo de Desarrollo](#-equipo-de-desarrollo)
+1. [Equipo de Desarrollo](#-equipo-de-desarrollo)
+2. [Descripción General](#-descripción-general)
+3. [Características Principales](#-características-principales)
+4. [Arquitectura y Patrones de Diseño](#-arquitectura-y-patrones-de-diseño)
+5. [Estructura del Proyecto](#-estructura-del-proyecto)
+6. [Reglamento Oficial Implementado](#-reglamento-oficial-implementado)
+7. [Requisitos e Instalación](#-requisitos-e-instalación)
+8. [Cómo Jugar](#-cómo-jugar)
 
 ---
 
@@ -94,7 +109,7 @@ El sistema está organizado bajo una arquitectura en capas limpiamente desacopla
 │  ┌───────────────────────────┴───────────────────────────┐  │
 │  │                   FachadaReglasMock                   │  │
 │  │   (Motor de reglas, barreras, capturas y victoria)    │  │
-│  └───────────────────────────────────────────────────────┘  │
+│  └───────────────────────────┘                              │
 └──────────────────────────────┬──────────────────────────────┘
                                │ intercambia
                                ▼
@@ -206,18 +221,6 @@ mvn exec:java
 
 ---
 
-## 👥 Equipo de Desarrollo
-
-Proyecto desarrollado de manera colaborativa utilizando Git con ramas de características independientes (`feature branches`) y flujo de Pull Requests:
-
-| Integrante | ID / Matrícula | Usuario GitHub | Rol en el Proyecto | Rama Asignada |
-|---|:---:|:---:|---|:---:|
-| **Gibran Alonso Ibarra Palomares** | `267883` | [@wareon711](https://github.com/wareon711) | Interfaz gráfica Swing (`VistaPartida`), panel del tablero (`PanelTablero`), dados interactivos, recursos y documentación. | `feature/interfaz-y-recursos` |
-| **Héctor Eduardo Rojo Cota** | `271229` | [@Eduardx77](https://github.com/Eduardx77) | Estructura base, arranque `Main`, modelos DTOs, interfaz del observador y configuración Maven. | `feature/app-y-dto` |
-| **Mía Anangel Nieblas Hollman** | `267653` | [@angeltqm](https://github.com/angeltqm) | Motor de reglas de negocio, validación de jugadas (`FachadaReglasMock`) y controlador MVC. | `feature/negocios-y-control` |
-
----
-
 <div align="center">
-  <sub>Desarrollado con dedicación para el curso de <b>Arquitectura y Diseño Estructural de Software</b>.</sub>
+  <sub>Proyecto desarrollado para la materia de <b>Arquitectura de Software</b>.</sub>
 </div>
