@@ -1,6 +1,9 @@
 package dto;
 
-public class JugadorDTO {
+import java.io.Serializable;
+
+public class JugadorDTO implements Serializable {
+    private static final long serialVersionUID = 1L;
 
     private String idJugador;
     private String nombreUsuario;
@@ -8,6 +11,7 @@ public class JugadorDTO {
     private String avatar;
     private int fichasEnMeta;
     private boolean activo;
+    private int turnosInactivos;
 
     public JugadorDTO() {
     }
@@ -20,6 +24,14 @@ public class JugadorDTO {
         this.avatar = avatar;
         this.fichasEnMeta = fichasEnMeta;
         this.activo = activo;
+    }
+
+    public int getTurnosInactivos() {
+        return turnosInactivos;
+    }
+
+    public void setTurnosInactivos(int turnosInactivos) {
+        this.turnosInactivos = turnosInactivos;
     }
 
     public String getIdJugador() {

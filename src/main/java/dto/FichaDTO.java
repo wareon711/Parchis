@@ -1,6 +1,9 @@
 package dto;
 
-public class FichaDTO {
+import java.io.Serializable;
+
+public class FichaDTO implements Serializable {
+    private static final long serialVersionUID = 1L;
 
     private String idFicha;
     private String idJugador;
