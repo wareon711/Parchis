@@ -17,4 +17,8 @@ public class ControladorPartida {
     public void moverFicha(String idFicha) {
         modelo.moverFicha(idJugadorLocal, idFicha);
     }
+
+    public void pasarTurno() {
+        modelo.pasarTurno(idJugadorLocal);
+    }
 }

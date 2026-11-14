@@ -25,17 +25,66 @@ public class ModeloPartida {
         observadores.remove(observador);
     }
 
+    public interface ListenerCambioEstado {
+        void onEstadoCambiado(EstadoPartidaDTO estado);
+    }
+
+    private ListenerCambioEstado listenerCambio;
+
+    public void setListenerCambio(ListenerCambioEstado listenerCambio) {
+        this.listenerCambio = listenerCambio;
+    }
+
     public void lanzarDado(String idJugador) {
         estadoActual = fachada.lanzarDado(idJugador);
-        notificarObservadores();
+        if (!(fachada instanceof negocios.FachadaReglasRemota)) {
+            avisarObservadores();
+            avisarCambio();
+        }
     }
 
     public void moverFicha(String idJugador, String idFicha) {
         estadoActual = fachada.moverFicha(idJugador, idFicha);
-        notificarObservadores();
+        if (!(fachada instanceof negocios.FachadaReglasRemota)) {
+            avisarObservadores();
+            avisarCambio();
+        }
     }
 
-    public void notificarObservadores() {
+    public void pasarTurno(String idJugador) {
+        estadoActual = fachada.pasarTurno(idJugador);
+        if (!(fachada instanceof negocios.FachadaReglasRemota)) {
+            avisarObservadores();
+            avisarCambio();
+        }
+    }
+
+    public void abandonarPartida(String idJugador) {
+        estadoActual = fachada.abandonarPartida(idJugador);
+        if (!(fachada instanceof negocios.FachadaReglasRemota)) {
+            avisarObservadores();
+            avisarCambio();
+        }
+    }
+
+    private void avisarCambio() {
+        if (listenerCambio != null && estadoActual != null) {
+            listenerCambio.onEstadoCambiado(estadoActual);
+        }
+    }
+
+    public void actualizarEstado(EstadoPartidaDTO nuevoEstado) {
+        if (nuevoEstado != null) {
+            this.estadoActual = nuevoEstado;
+            avisarObservadores();
+        }
+    }
+
+    public EstadoPartidaDTO getEstadoActual() {
+        return estadoActual != null ? estadoActual : fachada.obtenerEstadoPartida();
+    }
+
+    public void avisarObservadores() {
         for (IObservadorPartida observador : new ArrayList<>(observadores)) {
             observador.actualizar(estadoActual);
         }
