@@ -1,9 +1,11 @@
 package dto;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
-public class EstadoPartidaDTO {
+public class EstadoPartidaDTO implements Serializable {
+    private static final long serialVersionUID = 1L;
 
     private final List<JugadorDTO> jugadores = new ArrayList<>();
     private final List<FichaDTO> fichas = new ArrayList<>();
