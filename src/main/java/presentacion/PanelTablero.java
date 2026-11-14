@@ -6,6 +6,8 @@ import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Cursor;
 import java.awt.Dimension;
+import java.awt.Font;
+import java.awt.FontMetrics;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.RenderingHints;
@@ -29,12 +31,13 @@ public class PanelTablero extends JPanel {
     private static final int[][] ANILLO = construirAnillo();
 
     private String idJugadorLocal = "J1";
+    private String colorLocal = SesionUsuario.getColorElegido();
     private Consumer<String> alClicFicha = id -> {};
     private EstadoPartidaDTO estadoActual;
     private final List<Shape> zonasClicables = new ArrayList<>();
     private final List<String> idsClicables = new ArrayList<>();
 
-    private final Map<String, Integer> ultimasPosiciones = new HashMap<>();
+    private final Map<String, Integer> ultimasPos = new HashMap<>();
     private final Map<String, Boolean> ultimasBases = new HashMap<>();
 
     private Timer timerSalto;
@@ -85,6 +88,38 @@ public class PanelTablero extends JPanel {
     public void configurar(String idJugadorLocal, Consumer<String> alClicFicha) {
         this.idJugadorLocal = idJugadorLocal != null ? idJugadorLocal : "J1";
         this.alClicFicha = alClicFicha != null ? alClicFicha : id -> {};
+        this.colorLocal = SesionUsuario.getColorElegido();
+    }
+
+    public void setColorLocal(String colorLocal) {
+        if (colorLocal != null && !colorLocal.isEmpty()) {
+            this.colorLocal = colorLocal.toUpperCase();
+            repaint();
+        }
+    }
+
+    public double angulo() {
+        if ("VERDE".equalsIgnoreCase(colorLocal)) {
+            return Math.PI;
+        } else if ("ROJO".equalsIgnoreCase(colorLocal)) {
+            return 3.0 * Math.PI / 2.0;
+        } else if ("AMARILLO".equalsIgnoreCase(colorLocal)) {
+            return Math.PI / 2.0;
+        }
+        return 0.0;
+    }
+
+    private static double[] rotarPunto(double x, double y, double cx, double cy, double angulo) {
+        if (Math.abs(angulo) < 1e-4) {
+            return new double[]{x, y};
+        }
+        double dx = x - cx;
+        double dy = y - cy;
+        double cos = Math.cos(angulo);
+        double sin = Math.sin(angulo);
+        double rx = cx + dx * cos - dy * sin;
+        double ry = cy + dx * sin + dy * cos;
+        return new double[]{rx, ry};
     }
 
     @Override
@@ -104,9 +139,18 @@ public class PanelTablero extends JPanel {
             return;
         }
 
-        if (ultimasPosiciones.isEmpty()) {
+        for (dto.JugadorDTO j : estado.getJugadores()) {
+            if (idJugadorLocal.equals(j.getIdJugador())) {
+                if (j.getColor() != null && !j.getColor().isEmpty()) {
+                    this.colorLocal = j.getColor().toUpperCase();
+                }
+                break;
+            }
+        }
+
+        if (ultimasPos.isEmpty()) {
             for (FichaDTO f : estado.getFichas()) {
-                ultimasPosiciones.put(f.getIdFicha(), f.getPosicion());
+                ultimasPos.put(f.getIdFicha(), f.getPosicion());
                 ultimasBases.put(f.getIdFicha(), f.isEnBase());
             }
             this.estadoActual = estado;
@@ -119,7 +163,7 @@ public class PanelTablero extends JPanel {
         boolean estabaEnBase = false;
 
         for (FichaDTO f : estado.getFichas()) {
-            int vieja = ultimasPosiciones.getOrDefault(f.getIdFicha(), -1);
+            int vieja = ultimasPos.getOrDefault(f.getIdFicha(), -1);
             boolean enBaseVieja = ultimasBases.getOrDefault(f.getIdFicha(), false);
 
             if (enBaseVieja && !f.isEnBase()) {
@@ -136,20 +180,20 @@ public class PanelTablero extends JPanel {
         }
 
         for (FichaDTO f : estado.getFichas()) {
-            ultimasPosiciones.put(f.getIdFicha(), f.getPosicion());
+            ultimasPos.put(f.getIdFicha(), f.getPosicion());
             ultimasBases.put(f.getIdFicha(), f.isEnBase());
         }
 
         this.estadoActual = estado;
 
         if (fichaMovida != null) {
-            iniciarAnimacionFicha(fichaMovida, estabaEnBase, posVieja);
+            animarFicha(fichaMovida, estabaEnBase, posVieja);
         } else {
             repaint();
         }
     }
 
-    private void iniciarAnimacionFicha(FichaDTO ficha, boolean estabaEnBase, int posVieja) {
+    private void animarFicha(FichaDTO ficha, boolean estabaEnBase, int posVieja) {
         if (timerSalto != null && timerSalto.isRunning()) {
             timerSalto.stop();
         }
@@ -165,16 +209,22 @@ public class PanelTablero extends JPanel {
         rutaAnimada.clear();
         String id = ficha.getIdFicha();
         String color = ficha.getColor();
+        double cx = x0 + lado / 2.0;
+        double cy = y0 + lado / 2.0;
+        double angulo = angulo();
 
         if (estabaEnBase) {
             int indice = Math.max(0, Math.min(3, ultimoDigito(id) - 1));
-            double[] s = posicionBaseEnTablero(color, indice);
-            rutaAnimada.add(new double[]{x0 + s[0] * celda, y0 + s[1] * celda});
-            rutaAnimada.add(coordenadasCasilla(color, 0, id, x0, y0, celda));
+            double[] s = posBase(color, indice);
+            double[] p1 = new double[]{x0 + s[0] * celda, y0 + s[1] * celda};
+            double[] p2 = coordCasilla(color, 0, id, x0, y0, celda);
+            rutaAnimada.add(rotarPunto(p1[0], p1[1], cx, cy, angulo));
+            rutaAnimada.add(rotarPunto(p2[0], p2[1], cx, cy, angulo));
         } else {
             int posFin = ficha.getPosicion();
             for (int p = posVieja; p <= posFin; p++) {
-                rutaAnimada.add(coordenadasCasilla(color, p, id, x0, y0, celda));
+                double[] pt = coordCasilla(color, p, id, x0, y0, celda);
+                rutaAnimada.add(rotarPunto(pt[0], pt[1], cx, cy, angulo));
             }
         }
 
@@ -215,23 +265,23 @@ public class PanelTablero extends JPanel {
         timerSalto.start();
     }
 
-    private double[] coordenadasCasilla(String color, int posicion, String idFicha, double x0, double y0, double celda) {
+    private double[] coordCasilla(String color, int posicion, String idFicha, double x0, double y0, double celda) {
         if (posicion < 0) {
             int indice = Math.max(0, Math.min(3, ultimoDigito(idFicha) - 1));
-            double[] s = posicionBaseEnTablero(color, indice);
+            double[] s = posBase(color, indice);
             return new double[]{x0 + s[0] * celda, y0 + s[1] * celda};
         }
         if (posicion == 56) {
             int indice = Math.max(0, Math.min(3, ultimoDigito(idFicha) - 1));
-            double[] s = posicionMetaEnTablero(color, indice);
+            double[] s = posMeta(color, indice);
             return new double[]{x0 + s[0] * celda, y0 + (s[1] - 0.04) * celda};
         }
         if (posicion <= 50) {
             int idx = (casillaInicio(color) + posicion) % 52;
-            int[] pos = coordenadaAnillo(idx);
+            int[] pos = coordAnillo(idx);
             return new double[]{x0 + (pos[0] + 0.5) * celda, y0 + (pos[1] + 0.5) * celda};
         }
-        int[] c = coordenadaCarril(color, posicion - 51);
+        int[] c = coordCarril(color, posicion - 51);
         return new double[]{x0 + (c[0] + 0.5) * celda, y0 + (c[1] + 0.5) * celda};
     }
 
@@ -268,16 +318,25 @@ public class PanelTablero extends JPanel {
         double y0 = (altoTotal - lado) / 2.0;
 
         BufferedImage imgTablero = Recursos.tablero();
+        double cx = x0 + lado / 2.0;
+        double cy = y0 + lado / 2.0;
+        double angulo = angulo();
+
         if (imgTablero != null) {
             double altoImg = lado * (imgTablero.getHeight() / (double) imgTablero.getWidth());
-            g.drawImage(imgTablero, (int) Math.round(x0), (int) Math.round(y0), (int) Math.round(lado), (int) Math.round(altoImg), null);
+            Graphics2D gTablero = (Graphics2D) g.create();
+            if (Math.abs(angulo) > 1e-4) {
+                gTablero.rotate(angulo, cx, cy);
+            }
+            gTablero.drawImage(imgTablero, (int) Math.round(x0), (int) Math.round(y0), (int) Math.round(lado), (int) Math.round(altoImg), null);
+            gTablero.dispose();
         }
 
-        dibujarFichasEnTablero(g, x0, y0, celda);
+        dibujarFichas(g, x0, y0, celda, cx, cy, angulo);
         g.dispose();
     }
 
-    private static double[] posicionBaseEnTablero(String color, int slot) {
+    private static double[] posBase(String color, int slot) {
         switch (color) {
             case "VERDE":
                 switch (slot) {
@@ -310,7 +369,7 @@ public class PanelTablero extends JPanel {
         }
     }
 
-    private void dibujarFichasEnTablero(Graphics2D g, double x0, double y0, double celda) {
+    private void dibujarFichas(Graphics2D g, double x0, double y0, double celda, double cx, double cy, double angulo) {
         if (estadoActual == null) {
             String[] colores = {"ROJO", "VERDE", "AZUL", "AMARILLO"};
             for (String col : colores) {
@@ -319,13 +378,16 @@ public class PanelTablero extends JPanel {
                     continue;
                 }
                 for (int slot = 0; slot < 4; slot++) {
-                    double[] s = posicionBaseEnTablero(col, slot);
-                    double cx = x0 + s[0] * celda;
-                    double cy = y0 + s[1] * celda;
+                    double[] s = posBase(col, slot);
+                    double origCx = x0 + s[0] * celda;
+                    double origCy = y0 + s[1] * celda;
+                    double[] rot = rotarPunto(origCx, origCy, cx, cy, angulo);
+                    double pcx = rot[0];
+                    double pcy = rot[1];
                     double ancho = celda * 0.95;
                     double alto = ancho * img.getHeight() / img.getWidth();
-                    double px = cx - ancho / 2;
-                    double py = cy + celda * 0.42 - alto;
+                    double px = pcx - ancho / 2;
+                    double py = pcy + celda * 0.42 - alto;
                     g.drawImage(img, (int) Math.round(px), (int) Math.round(py), (int) Math.round(ancho), (int) Math.round(alto), null);
                 }
             }
@@ -350,25 +412,25 @@ public class PanelTablero extends JPanel {
                 clave = "animada-" + f.getIdFicha();
             } else if (f.isEnBase()) {
                 int indice = Math.max(0, Math.min(3, ultimoDigito(f.getIdFicha()) - 1));
-                double[] s = posicionBaseEnTablero(f.getColor(), indice);
+                double[] s = posBase(f.getColor(), indice);
                 p.cx = x0 + s[0] * celda;
                 p.cy = y0 + s[1] * celda;
                 clave = "base-" + f.getIdFicha();
             } else if (f.isEnMeta()) {
                 int indice = Math.max(0, Math.min(3, ultimoDigito(f.getIdFicha()) - 1));
-                double[] s = posicionMetaEnTablero(f.getColor(), indice);
+                double[] s = posMeta(f.getColor(), indice);
                 p.cx = x0 + s[0] * celda;
                 p.cy = y0 + (s[1] - 0.04) * celda;
                 p.escala = 0.52;
                 clave = "meta-" + f.getIdFicha();
             } else if (f.getPosicion() <= 50) {
                 int idx = (casillaInicio(f.getColor()) + f.getPosicion()) % 52;
-                int[] pos = coordenadaAnillo(idx);
+                int[] pos = coordAnillo(idx);
                 p.cx = x0 + (pos[0] + 0.5) * celda;
                 p.cy = y0 + (pos[1] + 0.5) * celda;
                 clave = "anillo-" + idx;
             } else {
-                int[] c = coordenadaCarril(f.getColor(), f.getPosicion() - 51);
+                int[] c = coordCarril(f.getColor(), f.getPosicion() - 51);
                 p.cx = x0 + (c[0] + 0.5) * celda;
                 p.cy = y0 + (c[1] + 0.5) * celda;
                 clave = "carril-" + f.getColor() + f.getPosicion();
@@ -390,6 +452,16 @@ public class PanelTablero extends JPanel {
                     p.escala *= 0.85;
                 }
                 todas.add(p);
+            }
+        }
+
+        if (Math.abs(angulo) > 1e-4) {
+            for (PiezaVisual p : todas) {
+                if (!p.ficha.getIdFicha().equals(idFichaAnimada)) {
+                    double[] rot = rotarPunto(p.cx, p.cy, cx, cy, angulo);
+                    p.cx = rot[0];
+                    p.cy = rot[1];
+                }
             }
         }
 
@@ -429,6 +501,17 @@ public class PanelTablero extends JPanel {
 
             g.drawImage(img, (int) Math.round(px), (int) Math.round(py), (int) Math.round(ancho), (int) Math.round(alto), null);
 
+            String numId = String.valueOf(Math.max(1, ultimoDigito(p.ficha.getIdFicha())));
+            int tamFuente = Math.max(9, (int) Math.round(11 * p.escala));
+            g.setFont(new Font("Segoe UI", Font.BOLD, tamFuente));
+            FontMetrics fm = g.getFontMetrics();
+            int tx = (int) Math.round(p.cx - fm.stringWidth(numId) / 2.0);
+            int ty = (int) Math.round(py + alto * 0.72 + fm.getAscent() * 0.35);
+            g.setColor(new Color(0, 0, 0, 175));
+            g.drawString(numId, tx + 1, ty + 1);
+            g.setColor(Color.WHITE);
+            g.drawString(numId, tx, ty);
+
             if (propiaMovible) {
                 zonasClicables.add(new Rectangle2D.Double(
                         Math.min(px, p.cx - celda * 0.55), Math.min(py, p.cy - celda * 0.4),
@@ -438,7 +521,7 @@ public class PanelTablero extends JPanel {
         }
     }
 
-    private static double[] posicionMetaEnTablero(String color, int slot) {
+    private static double[] posMeta(String color, int slot) {
         switch (color) {
             case "VERDE":
                 switch (slot) {
@@ -509,7 +592,7 @@ public class PanelTablero extends JPanel {
         return 0;
     }
 
-    private static int[] coordenadaCarril(String color, int paso) {
+    private static int[] coordCarril(String color, int paso) {
         if ("VERDE".equals(color)) {
             return new int[]{7, 1 + paso};
         }
@@ -522,7 +605,7 @@ public class PanelTablero extends JPanel {
         return new int[]{1 + paso, 7};
     }
 
-    private static int[] coordenadaAnillo(int casilla) {
+    private static int[] coordAnillo(int casilla) {
         return ANILLO[casilla];
     }
 

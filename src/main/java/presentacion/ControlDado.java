@@ -22,7 +22,7 @@ public class ControlDado extends JPanel {
     private Runnable alClicDado = () -> {};
     private Timer timerDado;
 
-    private boolean orientacionIzquierda = true;
+    private boolean esIzquierda = true;
     private boolean mostrarFlecha = false;
     private boolean ocultar = false;
     private boolean habilitado = true;
@@ -48,7 +48,7 @@ public class ControlDado extends JPanel {
         setPreferredSize(new Dimension(84, 92));
 
         mostrarValor(0);
-        actualizarPosicionBoton();
+        ubicarBoton();
     }
 
     public ControlDado(Runnable alClicDado) {
@@ -60,9 +60,9 @@ public class ControlDado extends JPanel {
         this.alClicDado = alClicDado != null ? alClicDado : () -> {};
     }
 
-    public void setOrientacionIzquierda(boolean orientacionIzquierda) {
-        this.orientacionIzquierda = orientacionIzquierda;
-        actualizarPosicionBoton();
+    public void setIzquierda(boolean esIzquierda) {
+        this.esIzquierda = esIzquierda;
+        ubicarBoton();
         repaint();
     }
 
@@ -82,10 +82,10 @@ public class ControlDado extends JPanel {
         mostrarValor(this.valorActual);
     }
 
-    private void actualizarPosicionBoton() {
-        int burbujaX = orientacionIzquierda ? 10 : 4;
+    private void ubicarBoton() {
+        int burbujaX = esIzquierda ? 10 : 4;
         int burbujaY = 24;
-        int bx = orientacionIzquierda ? burbujaX + 16 : burbujaX + 6;
+        int bx = esIzquierda ? burbujaX + 16 : burbujaX + 6;
         int by = burbujaY + 9;
         botonDado.setBounds(bx, by, TAMANIO_DADO, TAMANIO_DADO);
     }
@@ -107,34 +107,39 @@ public class ControlDado extends JPanel {
             botonDado.setText(valor == 0 ? "?" : String.valueOf(valor));
             return;
         }
-        Image escalada = img.getScaledInstance(TAMANIO_DADO, TAMANIO_DADO, Image.SCALE_SMOOTH);
         if (esOponente) {
             BufferedImage atenuada = new BufferedImage(TAMANIO_DADO, TAMANIO_DADO, BufferedImage.TYPE_INT_ARGB);
             Graphics2D g = atenuada.createGraphics();
+            g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+            g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BICUBIC);
             g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.78f));
-            g.drawImage(escalada, 0, 0, null);
+            g.drawImage(img, 0, 0, TAMANIO_DADO, TAMANIO_DADO, null);
             g.dispose();
-            botonDado.setIcon(new ImageIcon(atenuada));
+            botonDado.setIcon(new HighResIcon(atenuada, TAMANIO_DADO, TAMANIO_DADO));
         } else {
-            botonDado.setIcon(new ImageIcon(escalada));
+            botonDado.setIcon(new HighResIcon(img, TAMANIO_DADO, TAMANIO_DADO));
         }
         repaint();
     }
 
-    public void animarTirada(int valorFinal, Runnable alTerminar) {
+    public void detenerAnimacion() {
         if (timerDado != null && timerDado.isRunning()) {
             timerDado.stop();
         }
+    }
+
+    public void animarTirada(int valorFinal, Runnable alTerminar) {
+        detenerAnimacion();
         setMostrarFlecha(false);
         habilitar(false);
 
         final int[] pasos = {0};
-        timerDado = new Timer(65, null);
+        timerDado = new Timer(35, null);
         timerDado.addActionListener(e -> {
             pasos[0]++;
             int aleatorio = 1 + (int) (Math.random() * 6);
             mostrarValor(aleatorio);
-            if (pasos[0] >= 8) {
+            if (pasos[0] >= 5) {
                 timerDado.stop();
                 mostrarValor(valorFinal);
                 if (alTerminar != null) {
@@ -161,9 +166,9 @@ public class ControlDado extends JPanel {
         g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
         g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
 
-        actualizarPosicionBoton();
+        ubicarBoton();
 
-        int burbujaX = orientacionIzquierda ? 10 : 4;
+        int burbujaX = esIzquierda ? 10 : 4;
         int burbujaY = 24;
         int burbujaAncho = 70;
         int burbujaAlto = 66;
@@ -171,7 +176,7 @@ public class ControlDado extends JPanel {
         boolean esInicio = mostrarFlecha && (valorActual == 0);
         BufferedImage imgBurbuja = esInicio ? Recursos.burbujaInicio() : Recursos.burbujaJuego();
         if (imgBurbuja != null) {
-            if (orientacionIzquierda) {
+            if (esIzquierda) {
                 g.drawImage(imgBurbuja, burbujaX, burbujaY, burbujaAncho, burbujaAlto, null);
             } else {
                 g.drawImage(imgBurbuja, burbujaX + burbujaAncho, burbujaY, -burbujaAncho, burbujaAlto, null);
@@ -183,7 +188,7 @@ public class ControlDado extends JPanel {
             if (imgFlecha != null) {
                 int flechaAncho = 36;
                 int flechaAlto = 26;
-                int bx = orientacionIzquierda ? burbujaX + 16 : burbujaX + 6;
+                int bx = esIzquierda ? burbujaX + 16 : burbujaX + 6;
                 int flechaX = bx + (TAMANIO_DADO - flechaAncho) / 2;
                 int flechaY = 0;
                 g.drawImage(imgFlecha, flechaX, flechaY, flechaAncho, flechaAlto, null);
